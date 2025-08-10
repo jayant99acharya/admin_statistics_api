@@ -228,12 +228,59 @@ admin_stats_api/
 ```
 
 ### Running Tests
-```bash
-# Local testing
-go test ./...
 
-# Docker testing
+The project includes comprehensive unit tests for all components:
+
+#### **Unit Tests Coverage:**
+- **Handlers**: API endpoint validation, authentication, date parsing, error handling
+- **Services**: Business logic, data structures, validation functions
+- **Models**: Data models, serialization, ObjectID handling
+- **Middleware**: Authentication middleware, token validation, security
+
+#### **Run All Tests:**
+```bash
+# Docker testing (recommended)
 docker-compose exec app go test ./...
+
+# With verbose output
+docker-compose exec app go test -v ./...
+
+# Local testing (if running locally)
+go test ./...
+```
+
+#### **Run Specific Test Packages:**
+```bash
+# Test handlers only
+docker-compose exec app go test ./handlers/
+
+# Test services only
+docker-compose exec app go test ./services/
+
+# Test models only
+docker-compose exec app go test ./models/
+
+# Test middleware only
+docker-compose exec app go test ./middleware/
+```
+
+#### **API Integration Testing:**
+Use the provided test script to test all endpoints:
+
+**Windows (PowerShell/CMD):**
+```cmd
+test_api.bat
+```
+
+**macOS/Linux (Terminal):**
+```bash
+chmod +x test_api.sh && ./test_api.sh
+```
+
+**Manual Testing (All Platforms):**
+```bash
+curl http://localhost:8090/health
+curl -H "Authorization: admin-secret-token-2024" "http://localhost:8090/gross_gaming_rev?from=2024-01-01&to=2024-12-31"
 ```
 
 ### Building for Production
@@ -260,24 +307,81 @@ docker-compose up --build
 
 > **Security Warning**: Always use strong, unique tokens in production environments.
 
+## Testing Guide
+
+### **Complete Testing Workflow:**
+
+1. **Start the Application:**
+   ```bash
+   docker-compose up -d --build
+   ```
+
+2. **Generate Test Data:**
+   ```bash
+   docker-compose exec app go run scripts/generate_data.go
+   ```
+
+3. **Run Unit Tests:**
+   ```bash
+   docker-compose exec app go test ./...
+   ```
+
+4. **Test API Endpoints:**
+   ```bash
+   # Windows (PowerShell/CMD):
+   test_api.bat
+   
+   # macOS/Linux (Terminal):
+   chmod +x test_api.sh && ./test_api.sh
+   
+   # Or test individual endpoints manually:
+   curl http://localhost:8090/health
+   curl -H "Authorization: admin-secret-token-2024" "http://localhost:8090/gross_gaming_rev?from=2024-01-01&to=2024-12-31"
+   ```
+
+5. **Get Real User IDs for Testing:**
+   ```bash
+   docker-compose exec mongodb mongosh -u admin -p password --authenticationDatabase admin admin_statistics --eval "db.transactions.distinct('userId').slice(0, 5)"
+   ```
+
+### **Test Coverage:**
+- ✅ Health check endpoint
+- ✅ Authentication middleware
+- ✅ Date parameter validation
+- ✅ User ID validation
+- ✅ Error handling
+- ✅ All API endpoints
+- ✅ Service layer logic
+- ✅ Data models
+- ✅ MongoDB integration
+
 ## Troubleshooting
 
-1. **MongoDB Connection Issues**
-   - Ensure MongoDB is running: `brew services list | grep mongodb`
-   - Check connection string in `.env` file
+1. **Docker Issues**
+   - Ensure Docker Desktop is running
+   - Try: `docker-compose down && docker-compose up -d --build`
 
-2. **Redis Connection Issues**
+2. **MongoDB Connection Issues**
+   - Check container status: `docker-compose ps`
+   - View logs: `docker-compose logs mongodb`
+
+3. **Redis Connection Issues**
    - Redis is optional; the API will work without it
-   - Check Redis status: `brew services list | grep redis`
+   - Check Redis status: `docker-compose logs redis`
 
-3. **Data Generation Takes Too Long**
+4. **Data Generation Takes Too Long**
    - The script generates 2M+ transactions, which may take 10-30 minutes
    - Monitor progress in the console output
    - Reduce `MIN_ROUNDS` in `scripts/generate_data.go` for faster testing
 
-4. **Memory Issues During Data Generation**
+5. **Memory Issues During Data Generation**
    - Increase batch size in `generate_data.go`
    - Ensure sufficient RAM (recommended: 8GB+)
+
+6. **Test Failures**
+   - Ensure containers are running: `docker-compose ps`
+   - Check application logs: `docker-compose logs app`
+   - Verify test data exists: Access MongoDB Express at http://localhost:8081
 
 ## Contributing
 

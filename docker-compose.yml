@@ -29,9 +29,11 @@ services:
     networks:
       - admin-stats-network
 
-  # Application service
+  # Application service (development version with Go toolchain)
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: admin-stats-api
     restart: unless-stopped
     ports:
@@ -42,10 +44,12 @@ services:
       - DB_NAME=admin_statistics
       - AUTH_TOKEN=admin-secret-token-2024
       - PORT=8090
-      - GIN_MODE=release
+      - GIN_MODE=debug
     depends_on:
       - mongodb
       - redis
+    volumes:
+      - .:/app  # Mount source code for development
     networks:
       - admin-stats-network
 
